@@ -1,0 +1,67 @@
+name: build
+
+on:
+  push:
+    branches: [ "solidrun" ]
+  pull_request:
+    branches: [ "solidrun" ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  docker_publish:
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and publish a Docker image for ${{ github.repository }}
+        uses: macbre/push-to-ghcr@master
+        with:
+          image_name: ${{ github.repository }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: docker/Dockerfile
+  
+  build_images:
+    needs: docker_publish
+    runs-on: "ubuntu-latest"
+    container:
+      image: ghcr.io/solidrun/rzg2_flash_writer:latest
+    strategy:
+      matrix:
+        device: [RZG2UL, RZG2LC, RZG2L, RZV2L]
+        ddr_size: [512MB_1PCS, 1GB_1PCS, 2GB_1PCS]
+        include:
+          - device: RZG2UL
+            swizzle: T3BC
+          - device: RZG2LC
+            swizzle: T3BC
+          - device: RZG2L
+            swizzle: T1BC
+          - device: RZV2L
+            swizzle: T1BC
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build firmware
+        run: |
+          CROSS_COMPILE=aarch64-none-linux-gnu- make DEVICE=${{ matrix.device }} \
+          DDR_TYPE=DDR4 \
+          DDR_SIZE=${{ matrix.ddr_size }} \
+          SWIZZLE=${{ matrix.swizzle }} \
+          FILENAME_ADD=_${{ matrix.device }}_HUMMINGBOARD -f makefile.linaro
+
+      - name: Copy firmware
+        run: |
+          mkdir -p s3
+          cp AArch64_output/Flash_Writer_SCIF_${{ matrix.device }}_HUMMINGBOARD_DDR4_${{ matrix.ddr_size }}.mot s3
+
+      - name: Upload to S3
+        uses: shallwefootball/upload-s3-action@v1.3.3
+        if: github.event_name == 'push'
+        with:
+          aws_key_id: ${{ secrets.IMAGES_S3_ACCESS }}
+          aws_secret_access_key: ${{ secrets.IMAGES_S3_SECRET }}
+          aws_bucket: ${{ secrets.IMAGES_S3_BUCKET }}
+          endpoint: ${{ secrets.IMAGES_S3_HOST }}
+          source_dir: s3
+          destination_dir: RZ/FlashWriter/
