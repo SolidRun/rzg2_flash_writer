@@ -55,6 +55,13 @@ jobs:
           mkdir -p s3
           cp AArch64_output/Flash_Writer_SCIF_${{ matrix.device }}_HUMMINGBOARD_DDR4_${{ matrix.ddr_size }}.mot s3
 
+      - name: Upload to GitHub
+        uses: actions/upload-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: Flash_Writer_SCIF_${{ matrix.device }}_HUMMINGBOARD_DDR4_${{ matrix.ddr_size }}.mot
+          path: s3/Flash_Writer_SCIF_${{ matrix.device }}_HUMMINGBOARD_DDR4_${{ matrix.ddr_size }}.mot
+
       - name: Upload to S3
         uses: shallwefootball/upload-s3-action@v1.3.3
         if: github.event_name == 'push'
