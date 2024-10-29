@@ -48,7 +48,7 @@ jobs:
           DDR_TYPE=DDR4 \
           DDR_SIZE=${{ matrix.ddr_size }} \
           SWIZZLE=${{ matrix.swizzle }} \
-          FILENAME_ADD=_${{ matrix.device }}_HUMMINGBOARD -f makefile.linaro
+          FILENAME_ADD=_${{ matrix.device }}_HUMMINGBOARD -f makefile.solidrun
 
       - name: Copy firmware
         run: |
