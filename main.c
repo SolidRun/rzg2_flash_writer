@@ -9,13 +9,8 @@
 #include "dgtable.h"
 #include "bit.h"
 #include "cpudrv.h"
-#if EMMC == 1
-#include "dgemmc.h"
-#endif /* EMMC == 1 */
 #include "scifdrv.h"
 #include "devdrv.h"
-#include "rpcqspidrv.h"
-#include "dgmodul1.h"
 #include "dgmodul4.h"
 #include "tzc_400.h"
 #include "mmio.h"
@@ -24,6 +19,13 @@
 #include "syc.h"
 #include "ddr.h"
 #include "sysc.h"
+#if (SERIAL_FLASH == 1)
+#include "rpcqspidrv.h"
+#include "dgmodul1.h"
+#endif
+#if EMMC == 1
+#include "dgemmc.h"
+#endif /* EMMC == 1 */
 
 #define	RZG2L_DEVID		(0x841C447)
 #define	RZV2L_DEVID		(0x8447447)
@@ -45,10 +47,8 @@ uint32_t gDumpStatus;
 
 #define RZG2L_SYC_INCK_HZ           (24000000)
 
-void Main(void)
+void __attribute__((optimize("O0"))) Main(void)
 {
-	uint32_t readDevId;
-
 	init_tzc_400_spimulti();
 
 	/* early setup Clock and Reset */
@@ -74,9 +74,6 @@ void Main(void)
 	gDumpMode	= SIZE_8BIT;
 	gDumpStatus	= DISABLE;
 
-	InitRPC_Mode();
-	ReadQspiFlashID(&readDevId);	/* dummy	*/
-
 	InitMain();
 	StartMess();
 	DecCom();
@@ -84,6 +81,12 @@ void Main(void)
 
 void InitMain(void)
 {
+#if (SERIAL_FLASH == 1)
+	uint32_t readDevId;
+
+	InitRPC_Mode();
+	ReadQspiFlashID(&readDevId);	/* dummy	*/
+#endif
 #if EMMC == 1
 	dg_init_emmc();
 #endif /* EMMC == 1 */
@@ -140,7 +143,7 @@ void DecCom(void)
 	char tmp[64], chCnt, chPtr;
 	uint32_t rtn = 0;
 	uint32_t res;
-	chCnt = 1;
+	chCnt = 0;
 
 	while (rtn == 0)
 	{
