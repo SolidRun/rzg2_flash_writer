@@ -95,7 +95,7 @@ static void ChgDumpAsciiCode(uintptr_t chCode, char *buf, char chPtr, uint32_t w
 	}
 }
 
-static void ChgDumpAsciiStr(char *buf)
+static void __attribute__((optimize("O0"))) ChgDumpAsciiStr(char *buf)
 {
 	unsigned char i;
 	buf[18] = 0;
@@ -372,7 +372,7 @@ static void dgMemEdit(uint32_t width)
 	COMMAND			: D				*
 	INPUT PARAMETER		: D  {sadr {eadr}}  		*
 *****************************************************************/
-void	dgDump(void)
+void dgDump(void)
 {
 	uintptr_t dmp1st, dmp2nd;
 	char decRtn;

@@ -55,7 +55,7 @@ static void InitMmcPinFunction(void);
  * @retval EMMC_SUCCESS successful.
  * @retval EMMC_ERR error from interrupt API.
  */
-EMMC_ERROR_CODE emmc_init(uint8_t low_clock_mode_enable)
+EMMC_ERROR_CODE __attribute__((optimize("O0"))) emmc_init(uint8_t low_clock_mode_enable)
 {
 	EMMC_ERROR_CODE retult;
 
@@ -86,7 +86,7 @@ EMMC_ERROR_CODE emmc_init(uint8_t low_clock_mode_enable)
  * 
  * @return None.
  */
-EMMC_ERROR_CODE emmc_terminate (void)
+EMMC_ERROR_CODE __attribute__((optimize("O0"))) emmc_terminate (void)
 {
     EMMC_ERROR_CODE result;
 
@@ -202,7 +202,7 @@ __inline static void emmc_set_data_timeout (
  * 
  * @return None.
  */
-static void emmc_drv_init(void)
+static void __attribute__((optimize("O0"))) emmc_drv_init(void)
 {
     /* initialize */
     emmc_memset((uint8_t *)(&mmc_drv_obj), 0, sizeof(st_mmc_base));

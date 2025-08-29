@@ -85,6 +85,7 @@ static PFC_REGS pfc_mux_reg_tbl[PFC_MUX_TBL_NUM] = {
 #endif
 };
 
+#if (SERIAL_FLASH == 1)
 static PFC_REGS  pfc_qspi_reg_tbl[PFC_QSPI_TBL_NUM] = {
 	/* QSPI0 */
 	{
@@ -114,7 +115,9 @@ static PFC_REGS  pfc_qspi_reg_tbl[PFC_QSPI_TBL_NUM] = {
 		{ PFC_OFF, (uintptr_t)NULL,       0 }						/* IEN */
 	}
 };
+#endif
 
+#if (EMMC == 1)
 static PFC_REGS  pfc_sd_reg_tbl[PFC_SD_TBL_NUM] = {
 	/* SD0_CLK */
 	{
@@ -163,6 +166,7 @@ static PFC_REGS  pfc_sd_reg_tbl[PFC_SD_TBL_NUM] = {
 		{ PFC_ON,  (uintptr_t)PFC_IEN09,  0x0000000001010101 }		/* IEN */
 	}
 };
+#endif
 
 static void pfc_mux_setup(void)
 {
@@ -199,6 +203,7 @@ static void pfc_mux_setup(void)
 	mmio_write_32(PFC_PWPR, PWPR_B0Wl);
 }
 
+#if (SERIAL_FLASH == 1)
 static void pfc_qspi_setup(void)
 {
 	int      cnt;
@@ -224,7 +229,9 @@ static void pfc_qspi_setup(void)
 		}
 	}
 }
+#endif
 
+#if (EMMC == 1)
 static void pfc_sd_setup(void)
 {
 	int      cnt;
@@ -264,10 +271,15 @@ static void pfc_sd_setup(void)
 		}
 	}
 }
+#endif
 
 void pfc_setup(void)
 {
 	pfc_mux_setup();
+#if (SERIAL_FLASH == 1)
 	pfc_qspi_setup();
+#endif
+#if (EMMC == 1)
 	pfc_sd_setup();
+#endif
 }
