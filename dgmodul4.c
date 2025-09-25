@@ -65,6 +65,20 @@ static uint32_t CheckQspiFlashId(void)
 				break;
 			}
 		break;
+		case ISSI_MANUFACTURER_ID:
+			PutStr(" ISSI : ", 0);
+			switch(deviceId)
+			{
+				case DEVICE_ID_IS25WP032D: /* IS25WP032D, 32Mbit = 4MiB */
+					PutStr("IS25WP032D", 1);
+					gQspi_sa_size    = SA_64KB; /* 64 KiB sectors */
+					gQspi_end_addess = TOTAL_SIZE_4MB - 0x8000 - 1;
+				break;
+				default:
+					ret = 1;
+				break;
+			}
+		break;
 		case WINBOND_MANUFACTURER_ID:
 			PutStr(" Winbond : ", 0);
 			switch(deviceId)
@@ -210,6 +224,9 @@ static uint32_t CheckQspiFlashId(void)
 				break;
 				case DEVICE_ID_MT25QU512:
 						PutStr("MT25QU512", 1);
+						Data2HexAscii(readDevId, str, 4);
+						PutStr(" FlashID = 0x", 0);
+						PutStr(str, 1);
 						gQspi_sa_size    = SA_64KB;
 						gQspi_end_addess = TOTAL_SIZE_64MB - 0x8000 - 1;
 				break;
@@ -232,11 +249,6 @@ static uint32_t CheckQspiFlashId(void)
 						PutStr("MT25QU02G", 1);
 						gQspi_sa_size    = SA_64KB;
 						gQspi_end_addess = TOTAL_SIZE_256MB - 0x8000 - 1;
-				break;
-				case DEVICE_ID_IS25WP032D:
-						PutStr("IS25WP032D", 1);
-						gQspi_sa_size    = SA_64KB;
-						gQspi_end_addess = TOTAL_SIZE_64MB - 0x8000 - 1;
 				break;
 				default:
 					ret = -1;
