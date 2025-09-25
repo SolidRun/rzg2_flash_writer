@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2023, Renesas Electronics Corporation. All rights reserved.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#ifndef __RZ_SOC_DEF_H__
+#define __RZ_SOC_DEF_H__
+
+#include <lib/utils_def.h>
+
+#define RZV2H_BOOT_ROM_BASE			(0x00000000)
+#define RZV2H_MSRAM_BASE			(0x08000000)
+#define RZV2H_ASRAM_BASE			(0x08100000)
+#define RZV2H_R8SRAM_BASE			(0x08180000)
+#define RZV2H_DEVICE_BASE			(0x10000000)
+#define RZV2H_ELC					(0x10400000)
+#define RZV2H_GPIO_BASE				(0x10410000)
+#define RZV2H_CPG_BASE				(0x10420000)
+#define RZV2H_SYSC_BASE				(0x10430000)
+#define RZV2H_TSIP_BASE				(0x10440000)
+#define RZV2H_OTP_BASE				(0x10450000)
+#define RZV2H_TZC400_M33_BASE		(0x10460000)
+#define RZV2H_TZC400_xSPI_BASE		(0x10470000)
+#define RZV2H_MHU_BASE				(0x10480000)
+#define RZV2H_CLMA1_BASE			(0x10490000)
+#define RZV2H_CLMA0_BASE			(0x104A0000)
+#define RZV2H_CST_BASE				(0x10800000)
+#define RZV2H_MCPU_SYS_BASE			(0x10C00000)
+#define RZV2H_TSU0_BASE				(0x11000000)
+#define RZV2H_TSU1_BASE				(0x11001000)
+#define RZV2H_XSPI_BASE				(0x11030000)
+
+#define RZV2H_SCIF_BASE				(0x11C01400)
+
+#define RZV2H_TZC400_DDR00_BASE		(0x13C60000)
+#define RZV2H_TZC400_DDR01_BASE		(0x13C70000)
+#define RZV2H_TZC400_DDR10_BASE		(0x13C80000)
+#define RZV2H_TZC400_DDR11_BASE		(0x13C90000)
+#define RZV2H_TZC400_R8_BASE		(0x13CA0000)
+#define RZV2H_TZC400_A55_BASE		(0x13CB0000)
+#define RZV2H_TZC400_PCIe_BASE		(0x13CC0000)
+
+#define RZV2H_GTM0_BASE				(0x11800000)
+#define	RZV2H_WDT_CA55_BASE			(0x14400000)
+
+#define RZV2H_SYC_BASE				(0x14010000)
+#define RZV2H_GIC_BASE				(0x14900000)
+#define RZV2H_SD0_BASE				(0x15C00000)
+#define RZV2H_SD1_BASE				(0x15C10000)
+#define RZV2H_SD2_BASE				(0x15C20000)
+#define RZV2H_DDR0_PHY_BASE			(0x1A000000)
+#define RZV2H_DDR1_PHY_BASE			(0x1C000000)
+#define RZV2H_DDR0_MEMC_BASE		(0x1E000000)
+#define RZV2H_DDR1_MEMC_BASE		(0x1E010000)
+
+#define RZV2H_XSPI_MEMORY_MAP_BASE	(0x20000000)
+#define RZV2H_PCIe_MIRROR_BASE		(0x30000000)
+#define RZV2H_DDR0_BASE				(0x40000000)
+#define RZV2H_DDR1_BASE				(0x240000000)
+#define RZV2H_PCIe0_BASE			(0x440000000)
+#define RZV2H_PCIe1_BASE			(0xA40000000)
+
+#define RZV2H_DDR_MEMC_BASE			RZV2H_DDR0_MEMC_BASE
+#define RZV2H_DDR_PHY_BASE			RZV2H_DDR0_PHY_BASE
+
+#define RZV2H_GICD_BASE				(RZV2H_GIC_BASE)
+#define RZV2H_GICR_BASE				(RZV2H_GIC_BASE + 0x00040000)
+
+#define RZV2H_SRAM_BASE				RZV2H_MSRAM_BASE
+
+#define RZV2H_SYC_INCK_HZ			(24000000)
+#define RZV2H_UART_INCK_HZ			(100000000)
+
+#define RZV2H_UART_BARDRATE			(115200)
+
+#define SYS_BASE					RZV2H_SYSC_BASE
+#define PFC_BASE					RZV2H_GPIO_BASE
+#define CPG_BASE					RZV2H_CPG_BASE
+#define XSPI_BASE					RZV2H_XSPI_BASE
+
+/* eMMC registers */
+#define MMC0_SD_BASE				RZV2H_SD0_BASE
+#define MMC1_SD_BASE				RZV2H_SD1_BASE
+#define MMC2_SD_BASE				RZV2H_SD2_BASE
+
+/* Error Interrupt CM33 Status Register k */
+#define RZV2H_ELC_ERINTM33CTL(k)	(RZV2H_ELC + 0x0304 + ((k) * 0x004))
+
+/* Error Interrupt CM33 Status Clear Register k */
+#define RZV2H_ELC_ERINTM33CLR(k)	(RZV2H_ELC + 0x0314 + ((k) * 0x004))
+
+/* Error Interrupt CA55 Status Register k */
+#define RZV2H_ELC_ERINTA55CTL(k)	(RZV2H_ELC + 0x0338 + ((k) * 0x004))
+
+/* Error Interrupt CA55 Status Clear Register k */
+#define RZV2H_ELC_ERINTA55CLR(k)	(RZV2H_ELC + 0x0348 + ((k) * 0x004))
+
+#endif /* __RZ_SOC_DEF_H__ */
