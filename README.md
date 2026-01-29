@@ -8,6 +8,7 @@ Flash Writer is a firmware programming utility for the Renesas RZ/V2N SoC. It pr
 |-------|-----|--------|
 | `RZV2N_EVK` | LPDDR4X | `Flash_Writer_SCIF_RZV2N_EVK_LPDDR4X.mot` |
 | `RZV2N_DEV` | LPDDR4X | `Flash_Writer_SCIF_RZV2N_DEV_LPDDR4X.mot` |
+| `RZV2N_SR_SOM_8GB` | LPDDR4X | `Flash_Writer_SCIF_RZV2N_SR_SOM_8GB_LPDDR4X.mot` |
 | `RZV2N_UNIVERSAL` | Internal memory only | `Flash_Writer_SCIF_RZV2N_COMMON_INTERNAL_MEMORY.mot` |
 
 ## Prerequisites

@@ -26,6 +26,15 @@ DEVICE   = RZV2H
 DDR_TYPE = LPDDR4X
 endif
 
+ifeq ("$(BOARD)", "RZV2N_SR_SOM_8GB")
+#--------------------------------------
+# SolidRun RZ/V2N SoM 8GB board
+#--------------------------------------
+FILENAME_ADD = _RZV2N_SR_SOM_8GB
+DEVICE   = RZV2H
+DDR_TYPE = LPDDR4X
+endif
+
 ifeq ("$(BOARD)", "RZV2N_UNIVERSAL")
 #--------------------------------------
 # RZ/V2N UNIVERSAL

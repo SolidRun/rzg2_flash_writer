@@ -41,6 +41,7 @@
 #define	MACRONIX_MANUFACTURER_ID	0xC2	/* Macronix	*/
 #define	MICRON_MANUFACTURER_ID		0x20	/* Micron	*/
 #define	DIALOG_MANUFACTURER_ID		0x1F	/* Dialog	*/
+#define	ISSI_MANUFACTURER_ID		0x9D	/* ISSI		*/
 
 #define	DEVICE_ID_S25FS128S		0x2018
 #define	DEVICE_ID_S25FS512S		0x0220
