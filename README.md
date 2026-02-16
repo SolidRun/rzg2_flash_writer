@@ -52,6 +52,46 @@ CROSS_COMPILE=/home/root/gcc/gcc-arm-10.3-2021.07-x86_64-aarch64-none-elf/bin/aa
 make -f makefile-v2n.gcc-arm clean
 ```
 
+## Programming
+
+The `flash-tools/flash_writer_tool.py` script automates firmware programming over the serial downloader (SCIF). It loads the flash writer onto the board, then writes BL2 and FIP images to the target flash device.
+
+### Prerequisites
+
+- Python 3 with `pyserial` and `tqdm` packages
+- USB serial connection to the board (default: `/dev/ttyUSB0`)
+- Board set to serial download boot mode
+
+### SPI NOR
+
+```bash
+python3 flash-tools/flash_writer_tool.py --target spi \
+    --fw Flash_Writer_SCIF_RZV2N_SR_SOM_8GB_LPDDR4X.mot \
+    --bl2 bl2_bp_spi-rzv2n-sr-som.srec \
+    --fip fip-rzv2n-sr-som.srec
+```
+
+### eMMC
+
+```bash
+python3 flash-tools/flash_writer_tool.py --target emmc \
+    --fw Flash_Writer_SCIF_RZV2N_SR_SOM_8GB_LPDDR4X.mot \
+    --bl2 bl2_bp_mmc-rzv2n-sr-som.bin \
+    --fip fip-rzv2n-sr-som.bin
+```
+
+### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--port` | `/dev/ttyUSB0` | Serial port device |
+| `--speed` | `921600` | Baudrate for data transfer |
+| `--target` | *(required)* | Flash target: `spi` or `emmc` |
+| `--fw` | *(required)* | Path to flash writer `.mot` file |
+| `--bl2` | | BL2 image (`.srec` for SPI, `.bin` for eMMC) |
+| `--fip` | | FIP image (`.srec` for SPI, `.bin` for eMMC) |
+| `--overlays` | | FIT image with DT overlays (eMMC only) |
+
 ## Output
 
 Build artifacts are placed in `AArch64_output/`:
