@@ -15,9 +15,9 @@ SPI_ADDRESSES = {
 
 # RZ/V2N eMMC address map
 EMMC_ADDRESSES = {
-    'bl2': {'partition': '1', 'sector': 0x1},
-    'fip': {'partition': '1', 'sector': 0x300},
-    'overlays': {'partition': '1', 'sector': 0x1800},
+    'bl2': {'partition': '1', 'sector': 0x1, 'ram': '8101E00'},
+    'fip': {'partition': '1', 'sector': 0x300, 'ram': '0'},
+    'overlays': {'partition': '1', 'sector': 0x1800, 'ram': '0'},
 }
 
 
@@ -27,14 +27,15 @@ def parse_args():
         epilog='''Examples:
   SPI NOR:  %(prog)s --target spi --fw Flash_Writer.mot --bl2 bl2_bp_spi.srec --fip fip.srec
   eMMC:     %(prog)s --target emmc --fw Flash_Writer.mot --bl2 bl2_bp_mmc.bin --fip fip.bin
+  eMMC:     %(prog)s --target emmc --fw Flash_Writer.mot --bl2 bl2_bp_mmc.srec --fip fip.srec
 ''',
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--port', default='/dev/ttyUSB0', help='Serial port device (default: /dev/ttyUSB0)')
     parser.add_argument('--speed', default=921600, type=int, help='Baudrate for data transfer (default: 921600)')
     parser.add_argument('--target', choices=['spi', 'emmc'], required=True, help='Flash target: spi or emmc')
     parser.add_argument('--fw', required=True, help='Path to flash writer .mot file')
-    parser.add_argument('--bl2', help='Path to BL2 image (.srec for SPI, .bin for eMMC)')
-    parser.add_argument('--fip', help='Path to FIP image (.srec for SPI, .bin for eMMC)')
+    parser.add_argument('--bl2', help='Path to BL2 image (.srec or .bin)')
+    parser.add_argument('--fip', help='Path to FIP image (.srec or .bin)')
     parser.add_argument('--overlays', help='Path to FIT image with DT overlays (eMMC only)')
 
     args = parser.parse_args()
@@ -49,7 +50,8 @@ def parse_args():
 
 
 def open_serial(port, baudrate, timeout=1):
-    ser = serial.Serial(port, baudrate=baudrate, timeout=timeout)
+    ser = serial.Serial(port, baudrate=baudrate, timeout=timeout,
+                        xonxoff=False, rtscts=False, dsrdtr=False)
     return ser
 
 
@@ -164,41 +166,121 @@ def spi_write(ser, name, ram_addr, flash_addr, file_path):
         spi_write_bin(ser, name, flash_addr, file_path)
 
 
-def emmc_write(ser, name, file_path, sector_number):
-    """Write binary file to eMMC using EM_WB command."""
-    print(f"\nWriting {name} to eMMC")
-    print(f"  Sector: 0x{format(sector_number, 'X')}")
+def emmc_write_srec(ser, name, file_path, partition, sector_number, ram_addr):
+    """Write S-record file to eMMC using EM_W command.
+
+    Protocol: EM_W -> partition -> sector -> RAM address -> send srec file
+    Uses blind delays (1s) between commands like the shell script.
+    """
+    emmc_delay = 1.0
+
+    print(f"\nWriting {name} to eMMC (EM_W, S-record)")
+    print(f"  Partition: {partition}")
+    print(f"  Sector:    0x{format(sector_number, 'X')}")
+    print(f"  RAM addr:  0x{ram_addr}")
     print(f"  File: {file_path}")
 
-    send_command(ser, "EM_WB", expect="Select area(0-2)>")
-    send_command(ser, "1", expect="Please Input Start Address in sector :")
+    ser.write(b"EM_W\r")
+    time.sleep(emmc_delay)
+    ser.write((partition + '\r').encode())
+    time.sleep(emmc_delay)
     sector_hex = format(sector_number, 'X')
-    send_command(ser, sector_hex, expect="Please Input File size(byte) : ")
-    file_size = os.path.getsize(file_path)
-    file_size_hex = format(file_size, 'X')
-    send_command(ser, file_size_hex, expect="please send binary file!")
+    ser.write((sector_hex + '\r').encode())
+    time.sleep(emmc_delay)
+    ser.write((ram_addr + '\r').encode())
+    time.sleep(emmc_delay)
 
     print("Sending file...")
     send_file(ser, file_path)
-    wait_for_prompt(ser, ">", timeout=10)
+    time.sleep(emmc_delay)
+    # Drain any remaining output from flash writer
+    time.sleep(1.0)
+    remaining = ser.read(ser.in_waiting or 0)
+    if remaining:
+        sys.stdout.write(remaining.decode(errors='ignore'))
+        sys.stdout.flush()
     print(f"{name} written to eMMC.")
 
 
+def emmc_write_bin(ser, name, file_path, partition, sector_number):
+    """Write binary file to eMMC using EM_WB command.
+
+    Protocol: EM_WB -> partition -> sector -> file size (hex) -> send binary file
+    Uses blind delays (1s) between commands like the shell script.
+    """
+    emmc_delay = 1.0
+
+    print(f"\nWriting {name} to eMMC (EM_WB, binary)")
+    print(f"  Partition: {partition}")
+    print(f"  Sector:    0x{format(sector_number, 'X')}")
+    print(f"  File: {file_path}")
+
+    ser.write(b"EM_WB\r")
+    time.sleep(emmc_delay)
+    ser.write((partition + '\r').encode())
+    time.sleep(emmc_delay)
+    sector_hex = format(sector_number, 'X')
+    ser.write((sector_hex + '\r').encode())
+    time.sleep(emmc_delay)
+    file_size = os.path.getsize(file_path)
+    file_size_hex = format(file_size, 'X')
+    ser.write((file_size_hex + '\r').encode())
+    time.sleep(emmc_delay)
+
+    print("Sending file...")
+    send_file(ser, file_path)
+    time.sleep(emmc_delay)
+    # Drain any remaining output from flash writer
+    time.sleep(1.0)
+    remaining = ser.read(ser.in_waiting or 0)
+    if remaining:
+        sys.stdout.write(remaining.decode(errors='ignore'))
+        sys.stdout.flush()
+    print(f"{name} written to eMMC.")
+
+
+def emmc_write(ser, name, file_path, addr):
+    """Write file to eMMC, auto-selecting EM_W or EM_WB based on file type."""
+    if is_srec(file_path):
+        emmc_write_srec(ser, name, file_path, addr['partition'],
+                        addr['sector'], addr['ram'])
+    else:
+        emmc_write_bin(ser, name, file_path, addr['partition'],
+                       addr['sector'])
+
+
 def emmc_configure(ser):
-    """Configure eMMC boot partition settings via EM_SECSD."""
+    """Configure eMMC boot partition settings via EM_SECSD.
+
+    Uses blind delays (1s) between commands like the shell script.
+    """
+    emmc_delay = 1.0
+
     print("\nConfiguring eMMC boot settings...")
 
-    # Set EXT_CSD register 177 (0xB1) BOOT_BUS_CONDITIONS
-    print("  Setting EXT_CSD register 0xB1 (BOOT_BUS_CONDITIONS)...")
-    send_command(ser, "EM_SECSD", expect="Please Input EXT_CSD Index(H'00 - H'1FF) :")
-    send_command(ser, "b1", expect="Please Input Value(H'00 - H'FF) :")
-    send_command(ser, "02", expect=">")
+    # Set EXT_CSD register 177 (0xB1) BOOT_BUS_CONDITIONS:
+    #   BOOT_MODE bit[4:3] = 0x1 (SDR + High Speed timings)
+    #   BOOT_BUS_WIDTH bit[1:0] = 0x2 (x8 bus width)
+    #   Value = 0x0a
+    print("  Setting EXT_CSD register 0xB1 (BOOT_BUS_CONDITIONS) = 0x0a...")
+    ser.write(b"EM_SECSD\r")
+    time.sleep(emmc_delay)
+    ser.write(b"b1\r")
+    time.sleep(emmc_delay)
+    ser.write(b"0a\r")
+    time.sleep(emmc_delay)
 
-    # Set EXT_CSD register 179 (0xB3) PARTITION_CONFIG
-    print("  Setting EXT_CSD register 0xB3 (PARTITION_CONFIG)...")
-    send_command(ser, "EM_SECSD", expect="Please Input EXT_CSD Index(H'00 - H'1FF) :")
-    send_command(ser, "b3", expect="Please Input Value(H'00 - H'FF) :")
-    send_command(ser, "08", expect=">")
+    # Set EXT_CSD register 179 (0xB3) PARTITION_CONFIG:
+    #   BOOT_ACK bit[6] = 0x0 (No boot acknowledge)
+    #   BOOT_PARTITION_ENABLE bit[5:3] = 0x1 (Boot partition 1 enabled)
+    #   Value = 0x08
+    print("  Setting EXT_CSD register 0xB3 (PARTITION_CONFIG) = 0x08...")
+    ser.write(b"EM_SECSD\r")
+    time.sleep(emmc_delay)
+    ser.write(b"b3\r")
+    time.sleep(emmc_delay)
+    ser.write(b"08\r")
+    time.sleep(emmc_delay)
 
     print("eMMC boot configuration complete.")
 
@@ -227,9 +309,10 @@ def main():
     if args.speed > 115200:
         print(f"\nIncreasing baudrate to {args.speed}...")
         send_command(ser, "SUP")
+        time.sleep(1.0)
         ser.close()
-        time.sleep(0.1)
         ser = open_serial(args.port, args.speed)
+        time.sleep(0.5)
         send_command(ser, "", ">")
 
     # Step 3: Flash images
@@ -247,15 +330,15 @@ def main():
     else:
         # eMMC programming
         if args.bl2:
-            emmc_write(ser, "BL2", args.bl2, EMMC_ADDRESSES['bl2']['sector'])
-            time.sleep(1)
+            emmc_write(ser, "BL2", args.bl2, EMMC_ADDRESSES['bl2'])
+            time.sleep(3)
 
         if args.fip:
-            emmc_write(ser, "FIP", args.fip, EMMC_ADDRESSES['fip']['sector'])
-            time.sleep(1)
+            emmc_write(ser, "FIP", args.fip, EMMC_ADDRESSES['fip'])
+            time.sleep(3)
 
         if args.overlays:
-            emmc_write(ser, "DT Overlays", args.overlays, EMMC_ADDRESSES['overlays']['sector'])
+            emmc_write(ser, "DT Overlays", args.overlays, EMMC_ADDRESSES['overlays'])
 
         # Configure eMMC boot partition
         emmc_configure(ser)
